@@ -679,6 +679,52 @@ pub fn (ctx &Context) draw_convex_poly(points []f32, c gx.Color) {
 	sgl.end()
 }
 
+fn get_catmullrom_point(i f32, points []f32) (f32, f32) {
+		int_i := int(i)
+		prev_x := points[int_i]
+		prev_y := points[int_i + 1]
+		start_x := points[int_i + 2]
+		start_y := points[int_i + 3]
+		end_x := points[int_i + 4]
+		end_y := points[int_i + 5]
+		next_x := points[int_i + 6]
+		next_y := points[int_i + 7]
+
+		t := i - int_i
+
+		tt := t * t
+		ttt := tt * t
+
+		q1 := -ttt + 2 * tt - t
+		q2 := 3 * ttt - 5 * tt + 2
+		q3 := -3 * ttt + 4 * tt + t
+		q4 := ttt - tt
+
+		// tx := f32(prev_x * q1 + start_x * q2 + end_x * q3 + next_x * q4) / f32(2)
+		// ty := f32(prev_y * q1 + start_y * q2 + end_y * q3 + next_y * q4) / f32(2)
+
+		tx := f32(prev_x * q1 + start_x * q2 + end_x * q3 + next_x * q4) * 0.5
+		ty := f32(prev_y * q1 + start_y * q2 + end_y * q3 + next_y * q4) * 0.5
+
+		return tx, ty
+}
+
+pub fn (ctx &Context) draw_spline_catmullrom(c gx.Color, points []f32) {
+		assert points.len % 2 == 0
+		for i := 0; i < points.len; i += 2 {
+				if i < points.len - 3 {
+						ctx.draw_line(points[i], points[i+1], points[i+2], points[i+3], gx.yellow)
+				}
+		}
+
+		delta := f32(0.005)
+		for i := f32(0); i < f32(points.len - 7) - delta; i += delta {
+				co_x, co_y := get_catmullrom_point(i, points)
+				co_x2, co_y2 := get_catmullrom_point(i + delta, points)
+				ctx.draw_line(co_x, co_y, co_x2, co_y2, gx.red)
+		}
+}
+
 // draw_empty_poly - draws the borders of a polygon, given an array of points, and a color.
 // Note that the points must be given in clockwise order.
 pub fn (ctx &Context) draw_empty_poly(points []f32, c gx.Color) {
