@@ -680,6 +680,7 @@ pub fn (ctx &Context) draw_convex_poly(points []f32, c gx.Color) {
 }
 
 fn get_catmullrom_point(i f32, points []f32) (f32, f32) {
+		// int_i := int(math.floor(i))
 		int_i := int(i)
 		prev_x := points[int_i]
 		prev_y := points[int_i + 1]
@@ -700,11 +701,8 @@ fn get_catmullrom_point(i f32, points []f32) (f32, f32) {
 		q3 := -3 * ttt + 4 * tt + t
 		q4 := ttt - tt
 
-		// tx := f32(prev_x * q1 + start_x * q2 + end_x * q3 + next_x * q4) / f32(2)
-		// ty := f32(prev_y * q1 + start_y * q2 + end_y * q3 + next_y * q4) / f32(2)
-
-		tx := f32(prev_x * q1 + start_x * q2 + end_x * q3 + next_x * q4) * 0.5
-		ty := f32(prev_y * q1 + start_y * q2 + end_y * q3 + next_y * q4) * 0.5
+		tx := (prev_x * q1 + start_x * q2 + end_x * q3 + next_x * q4) / 2
+		ty := (prev_y * q1 + start_y * q2 + end_y * q3 + next_y * q4) / 2
 
 		return tx, ty
 }
@@ -717,11 +715,34 @@ pub fn (ctx &Context) draw_spline_catmullrom(c gx.Color, points []f32) {
 				}
 		}
 
-		delta := f32(0.005)
-		for i := f32(0); i < f32(points.len - 7) - delta; i += delta {
-				co_x, co_y := get_catmullrom_point(i, points)
-				co_x2, co_y2 := get_catmullrom_point(i + delta, points)
-				ctx.draw_line(co_x, co_y, co_x2, co_y2, gx.red)
+		delta := f32(0.1)
+		// for j in 0 .. (points.len - 2)/2 - 1 {
+		for i := 0; i < points.len - 7; i += 2 {
+				for j in 0 .. 10 {
+						fj := f32(j) / 10
+						// mut modulo := f32(0)
+						// if j >= 9 { j = 0
+						// 						 i = int(math.round(i))
+						// 						 modulo = 0
+						// 						 println('a')
+						// 					 }
+						// else { modulo = f32(math.fmod(i, 1)) }
+						modulo := f32(math.fmod(fj, 1))
+
+						if fj < delta {
+								co_x, co_y := get_catmullrom_point(f32(i) + 0.1, points)
+								ctx.draw_line(points[i + 2], points[i + 3], co_x, co_y, gx.red)
+								println('$i, $fj, $modulo')
+						} else if fj < 1 - delta * 1 {
+								co_x, co_y := get_catmullrom_point(fj + i, points)
+								co_x2, co_y2 := get_catmullrom_point(fj + i + delta, points)
+								ctx.draw_line(co_x, co_y, co_x2, co_y2, gx.red)
+								// println('$i, $j, $modulo')
+						} else {
+								co_x, co_y := get_catmullrom_point(fj + i, points)
+								ctx.draw_line(points[i + 4], points[i + 5], co_x, co_y, gx.red)
+						}
+				}
 		}
 }
 
